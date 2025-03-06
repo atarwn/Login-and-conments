@@ -1,1 +1,241 @@
-# Login-and-conments
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login System</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: black;
+        }
+
+        .container {
+            width: 300px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(255, 100, 100, 0.5);
+            overflow: hidden;
+        }
+
+        h2 {
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .input-box {
+            position: relative;
+            margin: 10px 0;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: #222;
+            color: white;
+            text-align: center;
+            position: relative;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(to right, #ff007f, #ffcc00);
+            border: none;
+            color: white;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            opacity: 0.8;
+        }
+
+        .message {
+            color: red;
+            margin-top: 10px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .table th, .table td {
+            border: 1px solid white;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .input-comment {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .input-comment input {
+            width: 80%;
+            padding: 8px;
+        }
+
+        .go-btn {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(to right, #00ffcc, #ffcc00);
+            border: none;
+            border-radius: 50%;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="authContainer">
+        <h2>Login</h2>
+        <form id="loginForm">
+            <div class="input-box">
+                <input type="text" id="username" placeholder="Username" required>
+            </div>
+            <div class="input-box">
+                <input type="password" id="password" placeholder="Password" required>
+            </div>
+            <button type="submit" class="btn">Sign In</button>
+            <p class="message" id="loginMessage"></p>
+        </form>
+        <button class="btn" id="registerPageBtn">Register</button>
+    </div>
+
+    <div class="container" id="registerContainer" style="display: none;">
+        <h2>Register</h2>
+        <form id="registerForm">
+            <div class="input-box">
+                <input type="text" id="newUsername" placeholder="Username" required>
+            </div>
+            <div class="input-box">
+                <input type="password" id="newPassword" placeholder="Password" required>
+            </div>
+            <div class="input-box">
+                <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+            </div>
+            <button type="submit" class="btn">Register</button>
+            <p class="message" id="registerMessage"></p>
+        </form>
+    </div>
+
+    <div class="container" id="commentSection" style="display: none;">
+        <h2 id="welcomeMessage"></h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Comments</th>
+                </tr>
+            </thead>
+            <tbody id="commentTable"></tbody>
+        </table>
+        <div class="input-comment">
+            <input type="text" id="commentInput" placeholder="Write a comment...">
+            <button class="go-btn" id="addCommentBtn">Go</button>
+        </div>
+        <button class="btn" id="logoutBtn">Logout</button>
+    </div>
+
+    <script>
+        let users = JSON.parse(localStorage.getItem('users')) || {};
+
+        function setCookie(name, value, days) {
+            let date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = `${name}=${value}; expires=${date.toUTCString()}; path=/`;
+        }
+
+        function getCookie(name) {
+            let cookies = document.cookie.split("; ");
+            for (let cookie of cookies) {
+                let [key, value] = cookie.split("=");
+                if (key === name) return value;
+            }
+            return null;
+        }
+
+        function deleteCookie(name) {
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (users[username] && users[username] === password) {
+                setCookie('currentUser', username, 7);
+                showCommentSection(username);
+            } else {
+                document.getElementById('loginMessage').innerText = "Аккаунта не существует";
+            }
+        });
+
+        document.getElementById('registerPageBtn').addEventListener('click', function() {
+            document.getElementById('authContainer').style.display = "none";
+            document.getElementById('registerContainer').style.display = "block";
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const username = document.getElementById('newUsername').value;
+            const password = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!username || !password || !confirmPassword) {
+                document.getElementById('registerMessage').innerText = "Заполните все поля!";
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                document.getElementById('registerMessage').innerText = "Пароли не совпадают!";
+                return;
+            }
+
+            users[username] = password;
+            localStorage.setItem('users', JSON.stringify(users));
+            setCookie('currentUser', username, 7);
+            showCommentSection(username);
+        });
+
+        function showCommentSection(username) {
+            document.getElementById('authContainer').style.display = "none";
+            document.getElementById('commentSection').style.display = "block";
+            document.getElementById('welcomeMessage').innerText = `User "${username}" is logged in`;
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            deleteCookie('currentUser');
+            location.reload();
+        });
+
+        window.onload = function() {
+            let currentUser = getCookie('currentUser');
+            if (currentUser) {
+                showCommentSection(currentUser);
+            }
+        };
+    </script>
+</body>
+</html>
